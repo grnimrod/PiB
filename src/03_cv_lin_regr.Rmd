@@ -1,0 +1,70 @@
+---
+title: ''
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+theme_set(theme_minimal())
+
+halldorsson_child_counts <- read_rds("../data/halldorsson_child_counts.rds") |> as.data.frame()
+halldorsson_child_fract <- read_rds("../data/halldorsson_child_fract.rds") |> as.data.frame()
+```
+
+```{r}
+fit_model_with_cv <- function(dataset, model_to_fit, folds = 10, repeats) {
+  create_folds <- function(dataset, folds) {
+    cvFolds <- cut(seq_len(nrow(dataset)), breaks = folds, labels = FALSE)
+    cvFolds <- sample(cvFolds)
+    
+    predicted <- rep(0, nrow(dataset))
+    
+    for (i in 1:folds) {
+      inTest <- which(cvFolds == i)
+      training <- dataset[-inTest, ]
+      validation <- dataset[inTest, ]
+      fit <- lm(model_to_fit, data = training)
+      predicted_values <- predict(fit, newdata = validation)
+      predicted[inTest] <- predicted_values
+    }
+    
+    cv_rmse <- sqrt(mean((log10(dataset$age_father) - predicted)^2))
+    
+    return(cv_rmse)
+  }
+  
+  pd <- tibble(run = 1:repeats)
+
+  for (i in pd$run) {
+    set.seed(i)
+    pd$cv_rmse[i] <- create_folds(dataset, folds)
+    cat("Run", i, "\n")
+    flush.console()
+  }
+  
+  assign("pd", pd, envir = .GlobalEnv)
+  return(pd)
+}
+```
+
+```{r}
+fit_model_with_cv(halldorsson_child_counts, "log10(age_father) ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A", 10, 5)
+fit_model_with_cv(halldorsson_child_fract, "log10(age_father) ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A", 10, 5)
+```
+
+Better CV RMSE results using the counts data
+
+# Fitting full model on counts data
+```{r}
+linear_counts <- lm(log10(age_father) ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A, data = halldorsson_child_counts)
+
+summary(linear_counts)
+hist(linear_counts$residuals)
+```
+
+

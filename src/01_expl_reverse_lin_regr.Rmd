@@ -1,0 +1,77 @@
+---
+title: ''
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+
+halldorsson_child_fract <- read_rds("../data/halldorsson_child_fract.rds") |> as.data.frame()
+```
+
+# Reverse linear regression on fractions data
+
+```{r}
+linear_regr_c_g <- lm(`C_G` ~ age_father, data = halldorsson_child_fract)
+linear_regr_c_t <- lm(`C_T` ~ age_father, data = halldorsson_child_fract)
+linear_regr_cpg_tpg <- lm(`CpG_TpG` ~ age_father, data = halldorsson_child_fract)
+linear_regr_t_c <- lm(`T_C` ~ age_father, data = halldorsson_child_fract)
+linear_regr_t_g <- lm(`T_G` ~ age_father, data = halldorsson_child_fract)
+linear_regr_c_a <- lm(`C_A` ~ age_father, data = halldorsson_child_fract)
+linear_regr_t_a <- lm(`T_A` ~ age_father, data = halldorsson_child_fract)
+```
+
+```{r}
+library(patchwork)
+
+p1 <- halldorsson_child_fract |> 
+  mutate(predicted = predict(linear_regr_c_g, data = halldorsson_child_fract)) |> 
+  ggplot(aes(x = age_father, y = `C_G`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+
+p2 <- halldorsson_child_fract |> 
+  mutate(predicted = predict(linear_regr_c_t, data = halldorsson_child_fract)) |> 
+  ggplot(aes(x = age_father, y = `C_T`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+
+p3 <- halldorsson_child_fract |> 
+  mutate(predicted = predict(linear_regr_cpg_tpg, data = halldorsson_child_fract)) |> 
+  ggplot(aes(x = age_father, y = `CpG_TpG`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+
+p4 <- halldorsson_child_fract |> 
+  mutate(predicted = predict(linear_regr_t_c, data = halldorsson_child_fract)) |> 
+  ggplot(aes(x = age_father, y = `T_C`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+
+p5 <- halldorsson_child_fract |> 
+  mutate(predicted = predict(linear_regr_t_g, data = halldorsson_child_fract)) |> 
+  ggplot(aes(x = age_father, y = `T_G`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+
+p6 <- halldorsson_child_fract |> 
+  mutate(predicted = predict(linear_regr_c_a, data = halldorsson_child_fract)) |> 
+  ggplot(aes(x = age_father, y = `C_A`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+
+p7 <- halldorsson_child_fract |> 
+  mutate(predicted = predict(linear_regr_t_a, data = halldorsson_child_fract)) |> 
+  ggplot(aes(x = age_father, y = `T_A`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+
+p1 + p2 + p3 + p4 + p5 + p6 + p7
+```
+
+

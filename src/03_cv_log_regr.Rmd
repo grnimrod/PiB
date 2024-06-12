@@ -1,0 +1,100 @@
+---
+title: ''
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+theme_set(theme_minimal())
+
+halldorsson_counts_split <- read_rds("../data/halldorsson_counts_split.rds") |> as.data.frame()
+halldorsson_fract_split <- read_rds("../data/halldorsson_fract_split.rds") |> as.data.frame()
+```
+
+```{r}
+fit_model_with_cv <- function(dataset, model_to_fit, folds = 10, repeats) {
+  create_folds <- function(dataset, folds) {
+    cvFolds <- cut(seq_len(nrow(dataset)), breaks = folds, labels = FALSE)
+    cvFolds <- sample(cvFolds)
+    
+    predicted <- rep(0, nrow(dataset))
+    
+    for (i in 1:folds) {
+      inTest <- which(cvFolds == i)
+      training <- dataset[-inTest, ]
+      validation <- dataset[inTest, ]
+      fit <- glm(model_to_fit, data = training, family = binomial)
+      predicted_probs <- predict(fit, newdata = validation, type = "response")
+      predicted[inTest] <- ifelse(predicted_probs > 0.5, 1, 0)
+    }
+    
+    cv_error <- mean(predicted != dataset$age_group)
+    
+    return(cv_error)
+  }
+  
+  pd <- tibble(run = 1:repeats)
+
+  for (i in pd$run) {
+    set.seed(i)
+    pd$cv_error[i] <- create_folds(dataset, folds)
+    cat("Run", i, "\n")
+    flush.console()
+  }
+  
+  assign("pd", pd, envir = .GlobalEnv)
+  return(pd)
+}
+```
+
+```{r}
+fit_model_with_cv(halldorsson_counts_split, "age_group ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A", 10, 5)
+fit_model_with_cv(halldorsson_fract_split, "age_group ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A", 10, 5)
+```
+
+Getting rid of two of the least "useful" predictors (C>A and T>A) doesn't significantly decrease the cv error
+
+Conclusion after cross-validation: the model seems to perform well under real life predictions
+
+Let's create the full model, make predictions on the training data and plot the difference to the actual values of the response variable
+
+```{r}
+logistic_counts <- glm(age_group ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A, data = halldorsson_counts_split, family = binomial)
+```
+
+```{r}
+probs <- predict(logistic_counts, data = halldorsson_counts_split, type = "response")
+
+pred <- rep(0, nrow(halldorsson_counts_split))
+pred[probs > 0.5] = 1
+
+halldorsson_counts_split$predicted <- pred
+```
+
+
+# Plot to show logistic regression with multiple predictors
+```{r}
+library(ggeffects)
+library(patchwork)
+
+plts <- lapply(names(coefficients(logistic_counts))[-1], function(i) {
+  return(plot(ggpredict(logistic_counts, i)))
+})
+
+wrap_plots(plts)
+```
+
+# Obtain performance metrics such as recall and F1 score
+```{r}
+library(caret)
+
+confusionMatrix(as.factor(halldorsson_counts_split$predicted), as.factor(halldorsson_counts_split$age_group),
+                mode = "everything", positive = "1")
+```
+
+

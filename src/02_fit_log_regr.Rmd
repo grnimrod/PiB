@@ -1,0 +1,104 @@
+---
+title: ''
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+theme_set(theme_minimal())
+
+halldorsson_counts_split <- read_rds("../data/halldorsson_counts_split.rds") |> as.data.frame()
+halldorsson_fract_split <- read_rds("../data/halldorsson_fract_split.rds") |> as.data.frame()
+```
+
+# Distribution of our binary variable
+```{r}
+p1 <- ggplot(halldorsson_counts_split, aes(x = age_group)) +
+  geom_bar(fill = "deepskyblue3", color = "black") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Distribution of Age", x = "Age", y = "Count")
+
+ggsave("figure_04_group_distr.png", plot = p1, width = 8, height = 5, path = "./../Figures/")
+```
+
+# Fitting logistic regression on counts data
+```{r}
+logistic_counts <- glm(age_group ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A, data = halldorsson_counts_split, family = binomial)
+
+summary(logistic_counts)
+```
+
+```{r}
+probs <- predict(logistic_counts, data = halldorsson_counts_split, type = "response")
+
+pred <- rep(0, nrow(halldorsson_counts_split))
+pred[probs > 0.5] = 1
+```
+
+```{r}
+contrasts(halldorsson_counts_split$age_group)
+
+table(pred, halldorsson_counts_split$age_group)
+```
+
+Correct predictions:(2635 + 23) / 2976
+```{r}
+mean(pred == halldorsson_counts_split$age_group)
+```
+
+89.3%
+Which means that the training error rate is 10.7%
+
+```{r}
+mean(pred != halldorsson_counts_split$age_group)
+```
+
+# C>A and T>A have the highest p-values, let's get rid of them and see what happens
+```{r}
+logistic_counts <- glm(age_group ~ C_G + C_T + CpG_TpG + T_C + T_G, data = halldorsson_counts_split, family = binomial)
+
+summary(logistic_counts)
+```
+
+```{r}
+probs <- predict(logistic_counts, data = halldorsson_counts_split, type = "response")
+
+pred <- rep(0, nrow(halldorsson_counts_split))
+pred[probs > 0.5] = 1
+
+mean(pred == halldorsson_counts_split$age_group)
+```
+
+A tiny bit lower AIC, same training error
+
+# Fitting logistic regression on fract data
+```{r}
+logistic_fract <- glm(age_group ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A, data = halldorsson_fract_split, family = binomial)
+
+summary(logistic_fract)
+```
+
+```{r}
+probs <- predict(logistic_fract, data = halldorsson_fract_split, type = "response")
+
+pred <- rep(0, nrow(halldorsson_fract_split))
+pred[probs > 0.5] = 1
+```
+
+```{r}
+contrasts(halldorsson_fract_split$age_group)
+
+table(pred, halldorsson_fract_split$age_group)
+```
+
+Correct predictions:(2635 + 23) / 2976
+```{r}
+mean(pred == halldorsson_fract_split$age_group)
+```
+
+

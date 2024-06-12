@@ -1,0 +1,44 @@
+---
+title: ''
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+theme_set(theme_minimal())
+
+halldorsson_explore <- read_rds("../data/halldorsson_explore.rds") |> as.data.frame()
+```
+
+```{r}
+halldorsson_explore <- halldorsson_explore |> 
+  mutate(avg_age = (age_father + age_mother) / 2,
+         .before = 3)
+```
+
+# Checking out how much the age of the father and mother covary
+```{r}
+cor.test(halldorsson_explore$age_father, halldorsson_explore$age_mother)
+```
+
+0.77 correlation, p-value is significant
+Age of parents is clearly correlated
+
+```{r}
+p <- ggplot(halldorsson_explore, aes(x = age_father, y = age_mother)) +
+  geom_point() +
+  scale_x_continuous(limits = c(0, 75)) +
+  scale_y_continuous(limits = c(0, 60)) +
+  annotate("segment", x = 0, y = 0, xend = 60, yend = 60) +
+  xlab("Age of Father") +
+  ylab("Age of Mother")
+
+ggsave("figure_03_age_correlation.png", plot = p, width = 8, height = 5, path = "./../Figures/")
+```
+
+

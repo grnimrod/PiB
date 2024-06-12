@@ -1,0 +1,73 @@
+---
+title: ''
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+theme_set(theme_minimal())
+
+halldorsson_child_counts <- read_rds("../data/halldorsson_child_counts.rds") |> as.data.frame()
+halldorsson_child_fract <- read_rds("../data/halldorsson_child_fract.rds") |> as.data.frame()
+```
+
+# Can the normality assumption be met on the fathers' age?
+
+## Visual
+```{r}
+p1 <- ggplot(halldorsson_child_counts, aes(x = age_father)) +
+  geom_histogram(binwidth = 1, fill = "deepskyblue3", color = "black") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Distribution of Fathers' age", x = "Fathers' Age", y = "Count")
+
+
+p2 <- ggplot(halldorsson_child_counts, aes(x = log10(age_father))) +
+  geom_histogram(binwidth = .05, fill = "deepskyblue3", color = "black") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(title = "Distribution of Fathers' age", x = "Fathers' Age (log)", y = "Count")
+
+ggsave("figure_05_age_distr.png", plot = p1, width = 8, height = 6, path = "./../Figures/")
+ggsave("figure_06_age_log_distr.png", plot = p2, width = 8, height = 6, path = "./../Figures/")
+```
+
+Seems kind of bimodal, as well as right skewed
+
+# Shapiro-Wilk test
+```{r}
+shapiro.test(halldorsson_child_counts$age_father)
+
+shapiro.test(log10(halldorsson_child_counts$age_father))
+```
+
+p-value is significant, we have to reject the null hypothesis of normal distribution
+W = 0.93 is relatively far from 1
+
+# Linear regression on counts data
+```{r}
+linear_counts <- lm(age_father ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A, data = halldorsson_child_counts)
+
+summary(linear_counts)
+hist(linear_counts$residuals)
+shapiro.test(linear_counts$residuals)
+```
+
+# Linear regression on counts data (log transformed age)
+
+Trying a model fit on the log response variable
+
+```{r}
+linear_counts_log10_age <- lm(log10(age_father) ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A, data = halldorsson_child_counts)
+
+summary(linear_counts_log10_age)
+hist(linear_counts_log10_age$residuals)
+shapiro.test(linear_counts_log10_age$residuals)
+var(linear_counts_log10_age$residuals)
+qqplot(y = linear_counts_log10_age$residuals, x = rnorm(1000,  sd = sqrt(0.009857264)),xlab = "normal", ylab="observed")
+```
+
+

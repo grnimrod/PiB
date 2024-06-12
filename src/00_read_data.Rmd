@@ -1,0 +1,99 @@
+---
+title: ''
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+
+halldorsson_raw <- read.delim("./../data/halldorsson_2019.tsv", header = TRUE, sep = "\t")
+```
+
+```{r}
+colnames(halldorsson_raw) <- c("chr", "pos", "ref", "alt", "mutation_class_cpg", "type_of_mutation", "context",
+                               "child", "phase_app1_app2", "age_father", "age_mother", "species", "reference", "class")
+```
+
+# Creating rmd file for exploratory data analysis
+```{r}
+halldorsson_explore <- halldorsson_raw |> 
+  filter(mutation_class_cpg %in% c("T>C", "C>T", "CpG>TpG", "C>G", "C>A", "T>A", "T>G")) |> 
+  select(age_father, age_mother, child, mutation_class_cpg, phase_app1_app2)
+```
+
+```{r}
+write_rds(x = halldorsson_explore, file = "../data/halldorsson_explore.rds")
+```
+
+```{r}
+halldorsson_prepared <- halldorsson_raw |> 
+  filter(mutation_class_cpg %in% c("T>C", "C>T", "CpG>TpG", "C>G", "C>A", "T>A", "T>G"),
+         phase_app1_app2 == "P") |> 
+  group_by(child, mutation_class_cpg, age_father) |> 
+  summarize(
+    nr_of_mut = n()
+  )
+```
+
+```{r}
+halldorsson_child_counts <- halldorsson_prepared |> 
+  pivot_wider(names_from = mutation_class_cpg,
+              values_from = nr_of_mut)
+
+halldorsson_child_counts[is.na(halldorsson_child_counts)] <- 0
+```
+
+# Renaming columns not to run into format errors
+```{r}
+colnames(halldorsson_child_counts) <- c("child", "age_father", "C_G", "C_T", "CpG_TpG", "T_C", "T_G", "C_A", "T_A")
+```
+
+# Creating fractions dataset from counts
+```{r}
+halldorsson_child_counts$total <- rowSums(halldorsson_child_counts) - halldorsson_child_counts$child - halldorsson_child_counts$age_father
+```
+
+```{r}
+halldorsson_child_fract <- halldorsson_child_counts |> 
+  mutate_at(vars(-total, -age_father, -child), funs(./total)) |> 
+  select(-total)
+```
+
+```{r}
+halldorsson_child_counts <- halldorsson_child_counts |> 
+  select(-total)
+```
+
+```{r}
+write_rds(x = halldorsson_child_counts, file = "../data/halldorsson_child_counts.rds")
+write_rds(x = halldorsson_child_fract, file = "../data/halldorsson_child_fract.rds")
+```
+
+# Creating counts dataset with binary variable for age
+```{r}
+halldorsson_counts_split <- halldorsson_child_counts |> 
+  mutate(age_group = as.factor(if_else(age_father > 40, 1, 0)),
+         .after = 2)
+```
+
+```{r}
+write_rds(x = halldorsson_counts_split, file = "../data/halldorsson_counts_split.rds")
+```
+
+# Creating fractions dataset with binary variable for age
+```{r}
+halldorsson_fract_split <- halldorsson_child_fract |> 
+  mutate(age_group = as.factor(if_else(age_father > 40, 1, 0)),
+         .after = 2)
+```
+
+```{r}
+write_rds(x = halldorsson_fract_split, file = "../data/halldorsson_fract_split.rds")
+```
+
+

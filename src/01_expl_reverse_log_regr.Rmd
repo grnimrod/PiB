@@ -1,0 +1,108 @@
+---
+title: ''
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+
+halldorsson_child_fract <- read_rds("../data/halldorsson_child_fract.rds") |> as.data.frame()
+
+# Transforming the age to be discrete instead of continuous
+halldorsson_child_fract$age_father <- as.factor(halldorsson_child_fract$age_father)
+```
+
+# Logistic regression based on fract dataframe
+```{r}
+log_regr_c_a <- glm(`C_A` ~ age_father, data = halldorsson_child_fract, family = binomial)
+
+summary(log_regr_c_a)
+
+halldorsson_child_fract |> 
+  mutate(predicted = predict(log_regr_c_a, data = halldorsson_child_fract, type = "response")) |> 
+  ggplot(aes(x = age_father, y = `C_A`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+```
+
+Looks a bit weird at first glance compared to the figures we had made with linear regression, as there we grouped by the fathers' age, so there was only one data point corresponding to each age slot, not multiple data points
+The overall relationship seems like it's the same as what we previously found
+
+```{r}
+log_regr_c_g <- glm(`C_G` ~ age_father, data = halldorsson_child_fract, family = binomial)
+
+summary(log_regr_c_g)
+
+halldorsson_child_fract |> 
+  mutate(predicted = predict(log_regr_c_g, data = halldorsson_child_fract, type = "response")) |> 
+  ggplot(aes(x = age_father, y = `C_G`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+```
+
+```{r}
+log_regr_c_t <- glm(`C_T` ~ age_father, data = halldorsson_child_fract, family = binomial)
+
+summary(log_regr_c_t)
+
+halldorsson_child_fract |> 
+  mutate(predicted = predict(log_regr_c_t, data = halldorsson_child_fract, type = "response")) |> 
+  ggplot(aes(x = age_father, y = `C_T`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+```
+
+```{r}
+log_regr_cpg_tpg <- glm(`CpG_TpG` ~ age_father, data = halldorsson_child_fract, family = binomial)
+
+summary(log_regr_cpg_tpg)
+
+halldorsson_child_fract |> 
+  mutate(predicted = predict(log_regr_cpg_tpg, data = halldorsson_child_fract, type = "response")) |> 
+  ggplot(aes(x = age_father, y = `CpG_TpG`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+```
+
+```{r}
+log_regr_t_c <- glm(`T_C` ~ age_father, data = halldorsson_child_fract, family = binomial)
+
+summary(log_regr_t_c)
+
+halldorsson_child_fract |> 
+  mutate(predicted = predict(log_regr_t_c, data = halldorsson_child_fract, type = "response")) |> 
+  ggplot(aes(x = age_father, y = `T_C`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+```
+
+```{r}
+log_regr_t_g <- glm(`T_G` ~ age_father, data = halldorsson_child_fract, family = binomial)
+
+summary(log_regr_t_g)
+
+halldorsson_child_fract |> 
+  mutate(predicted = predict(log_regr_t_g, data = halldorsson_child_fract, type = "response")) |> 
+  ggplot(aes(x = age_father, y = `T_G`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+```
+
+```{r}
+log_regr_t_a <- glm(`T_A` ~ age_father, data = halldorsson_child_fract, family = binomial)
+
+summary(log_regr_t_a)
+
+halldorsson_child_fract |> 
+  mutate(predicted = predict(log_regr_t_a, data = halldorsson_child_fract, type = "response")) |> 
+  ggplot(aes(x = age_father, y = `T_A`)) +
+  geom_point() +
+  geom_smooth(aes(y = predicted))
+```
+
+

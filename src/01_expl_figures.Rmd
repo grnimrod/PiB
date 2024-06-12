@@ -1,0 +1,60 @@
+---
+title: ''
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+theme_set(theme_minimal())
+
+halldorsson_explore <- read_rds("../data/halldorsson_explore.rds") |> as.data.frame()
+```
+
+```{r}
+halldorsson_explore <- halldorsson_explore |> 
+  group_by(mutation_class_cpg) |> 
+  summarize(
+    avg_age_father = mean(age_father),
+    avg_age_mother = mean(age_mother),
+    nr_of_mut = n()
+  )
+```
+
+```{r}
+p1 <- ggplot(halldorsson_explore, aes(x = avg_age_father, y = avg_age_mother, size = nr_of_mut, color = mutation_class_cpg)) +
+  geom_point() +
+  xlab("Average Age of Father") +
+  ylab("Average Age of Mother") +
+  labs(size = "Number of Mutations", color = "Mutation Class")
+
+ggsave("figure_01_mut_class_freq.png", plot = p1, width = 8, height = 5, path = "./../Figures/")
+```
+
+```{r}
+library(patchwork)
+
+# Avg age of father
+p1 <- ggplot(halldorsson_explore) +
+  geom_bar(aes(x = mutation_class_cpg, y = avg_age_father), fill = "deepskyblue3", color = "black", stat = "identity") +
+  scale_y_continuous(limits = c(0, 33.5)) +
+  xlab("Mutation Class") +
+  ylab("Average Age of Father")
+
+# Avg age of mother
+p2 <- ggplot(halldorsson_explore) +
+  geom_bar(aes(x = mutation_class_cpg, y = avg_age_mother), fill = "deepskyblue3", color = "black", stat = "identity") +
+  scale_y_continuous(limits = c(0, 33.5)) +
+  xlab("Mutation Class") +
+  ylab("Average Age of Mother")
+
+p_combined <- p2 + p1
+
+ggsave("figure_02_age_barplot.png", plot = p_combined, width = 8, height = 5, path = "./../Figures/")
+```
+
+
