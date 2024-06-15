@@ -35,10 +35,11 @@ p <- ggplot(halldorsson_explore, aes(x = age_father, y = age_mother)) +
   scale_x_continuous(limits = c(0, 75)) +
   scale_y_continuous(limits = c(0, 60)) +
   annotate("segment", x = 0, y = 0, xend = 60, yend = 60) +
+  geom_smooth(aes(x = age_father, y = age_mother, color = "orange"), method = "lm", show.legend = FALSE) +
   xlab("Age of Father") +
   ylab("Age of Mother")
 
-ggsave("figure_03_age_correlation.png", plot = p, width = 8, height = 5, path = "./../Figures/")
+ggsave("figure_02_age_correlation.png", plot = p, width = 8, height = 5, path = "./../../Figures/")
 ```
 
 

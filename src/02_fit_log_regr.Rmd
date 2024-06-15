@@ -21,9 +21,10 @@ halldorsson_fract_split <- read_rds("../data/halldorsson_fract_split.rds") |> as
 p1 <- ggplot(halldorsson_counts_split, aes(x = age_group)) +
   geom_bar(fill = "deepskyblue3", color = "black") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Distribution of Age", x = "Age", y = "Count")
+  labs(x = "Age", y = "Count") +
+  scale_x_discrete(labels = c("Below 40", "Above 40"))
 
-ggsave("figure_04_group_distr.png", plot = p1, width = 8, height = 5, path = "./../Figures/")
+ggsave("figure_04_group_distr.png", plot = p1, width = 8, height = 5, path = "./../../Figures/")
 ```
 
 # Fitting logistic regression on counts data

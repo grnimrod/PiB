@@ -76,17 +76,25 @@ pred[probs > 0.5] = 1
 halldorsson_counts_split$predicted <- pred
 ```
 
-
 # Plot to show logistic regression with multiple predictors
 ```{r}
 library(ggeffects)
 library(patchwork)
 
-plts <- lapply(names(coefficients(logistic_counts))[-1], function(i) {
-  return(plot(ggpredict(logistic_counts, i)))
+coef_names <- names(coefficients(logistic_counts))[-1]
+
+x_labels <- c("C>G", "C>T", "CpG>TpG", "T>C", "T>G", "C>A", "T>A")
+
+plts <- lapply(1:length(coef_names), function(i) {
+  p <- plot(ggpredict(logistic_counts, coef_names[i]))
+  p + theme(plot.title = element_text(hjust = 0.5, size = 14)) +
+    xlab(x_labels[i]) + ylab("Probability") +
+    ggtitle(NULL)
 })
 
-wrap_plots(plts)
+p <- wrap_plots(plts)
+
+ggsave("figure_07_log_regr.png", plot = p, width = 8, height = 5, path = "./../../Figures/")
 ```
 
 # Obtain performance metrics such as recall and F1 score

@@ -23,16 +23,16 @@ halldorsson_child_fract <- read_rds("../data/halldorsson_child_fract.rds") |> as
 p1 <- ggplot(halldorsson_child_counts, aes(x = age_father)) +
   geom_histogram(binwidth = 1, fill = "deepskyblue3", color = "black") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Distribution of Fathers' age", x = "Fathers' Age", y = "Count")
+  labs(x = "Fathers' Age", y = "Count")
 
 
 p2 <- ggplot(halldorsson_child_counts, aes(x = log10(age_father))) +
   geom_histogram(binwidth = .05, fill = "deepskyblue3", color = "black") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "Distribution of Fathers' age", x = "Fathers' Age (log)", y = "Count")
+  labs(x = "Fathers' Age (log)", y = "Count")
 
-ggsave("figure_05_age_distr.png", plot = p1, width = 8, height = 6, path = "./../Figures/")
-ggsave("figure_06_age_log_distr.png", plot = p2, width = 8, height = 6, path = "./../Figures/")
+ggsave("figure_03_age_distr.png", plot = p1, width = 8, height = 5, path = "./../../Figures/")
+ggsave("figure_05_age_log_distr.png", plot = p2, width = 8, height = 5, path = "./../../Figures/")
 ```
 
 Seems kind of bimodal, as well as right skewed

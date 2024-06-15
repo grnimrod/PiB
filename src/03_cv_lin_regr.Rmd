@@ -61,10 +61,33 @@ Better CV RMSE results using the counts data
 
 # Fitting full model on counts data
 ```{r}
-linear_counts <- lm(log10(age_father) ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A, data = halldorsson_child_counts)
+linear_counts_log10 <- lm(log10(age_father) ~ C_G + C_T + CpG_TpG + T_C + T_G + C_A + T_A, data = halldorsson_child_counts)
 
-summary(linear_counts)
-hist(linear_counts$residuals)
+summary(linear_counts_log10)
+hist(linear_counts_log10$residuals)
+
+var(linear_counts_log10$residuals)
+```
+
+```{r}
+library(patchwork)
+
+p1 <- ggplot() +
+  geom_histogram(aes(x = linear_counts_log10$residuals), fill = "deepskyblue3", color = "black", binwidth = 0.05) +
+  labs(x = "Distribution of Residuals", y = "Frequency")
+
+set.seed(123)
+n <- length(linear_counts_log10_age$residuals)
+x <- rnorm(n, sd = sqrt(0.009857264))
+
+p2 <- ggplot(data.frame(x = x, y = linear_counts_log10_age$residuals), aes(sample = linear_counts_log10_age$residuals)) +
+  geom_qq() +
+  geom_abline(intercept = mean(linear_counts_log10_age$residuals), slope = sd(linear_counts_log10_age$residuals)) +
+  labs(x = "Normal Distribution Quantiles", y = "Observed Quantiles")
+
+p <- p1 + p2
+
+ggsave("figure_06_resid.png", plot = p, width = 8, height = 3, path = "./../../Figures/")
 ```
 
 
